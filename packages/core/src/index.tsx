@@ -12,12 +12,12 @@ import AppNotificationMessages from './App/Containers/app-notification-messages.
 import { AnalyticsInitializer } from 'Utils/Analytics';
 import { getActiveAccounts, isTmbEnabled } from '@deriv/utils';
 
-const DERIV_OAUTH_APP_ID = '34jChK9KLIlj89GWZImQ5';
+const DERIV_OAUTH_APP_ID = '70901';
 
 const configureDerivAppId = () => {
     try {
         // Store the App ID as a plain string. The WebSocket URL must receive
-        // app_id=34jChK9KLIlj89GWZImQ5, not a JSON-quoted value.
+        // the numeric Deriv Application ID, not a JSON-quoted value.
         window.localStorage.setItem('config.app_id', DERIV_OAUTH_APP_ID);
     } catch (error) {
         // Do not prevent the application from starting if browser storage is unavailable.

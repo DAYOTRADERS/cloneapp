@@ -8,6 +8,8 @@ function refreshOnUpdate() {
     return swRegistrationObject => {
         swRegistrationObject.onupdatefound = () => {
             const updatingWorker = swRegistrationObject.installing;
+            if (!updatingWorker) return;
+
             updatingWorker.onstatechange = () => {
                 if (updatingWorker.state === 'installed' && navigator.serviceWorker.controller) {
                     // eslint-disable-next-line no-console
@@ -20,8 +22,9 @@ function refreshOnUpdate() {
 }
 
 export default function register() {
-    // Register the service worker
-    if (/* process.env.NODE_ENV === 'production' && */ 'serviceWorker' in navigator) {
+    // Register the service worker only where the application explicitly supports
+    // the PWA cache. Custom deployments are intentionally kept network-first.
+    if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             const sw_url = `${window.location.origin}${getUrlBase('/service-worker.js')}`;
             navigator.serviceWorker
@@ -38,20 +41,13 @@ export default function register() {
 
                     registration.onupdatefound = () => {
                         const installingWorker = registration.installing;
+                        if (!installingWorker) return;
+
                         installingWorker.onstatechange = () => {
                             if (installingWorker.state === 'installed') {
                                 if (navigator.serviceWorker.controller && performance.now() > EVERY_HOUR) {
-                                    // User's first visit:
-                                    // At this point, the old content will have been purged and
-                                    // the fresh content will have been added to the cache.
-                                    // It's the perfect time to display a "New content is
-                                    // available; please refresh." message in your web app.
                                     const new_version_received = new Event('UpdateAvailable');
                                     document.dispatchEvent(new_version_received);
-                                } else {
-                                    // At this point, everything has been precached.
-                                    // It's the perfect time to display a
-                                    // "Content is cached for offline use." message.
                                 }
                             }
                         };
@@ -65,9 +61,20 @@ export default function register() {
 }
 
 export function unregister() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.unregister();
-        });
+    if (!('serviceWorker' in navigator)) return;
+
+    // Do not wait on navigator.serviceWorker.ready: a stale worker can keep
+    // serving an old bundle indefinitely. Remove all registrations immediately
+    // and clear their Cache Storage entries on custom deployments.
+    navigator.serviceWorker
+        .getRegistrations()
+        .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+        .catch(error => console.warn('Unable to unregister stale service workers.', error));
+
+    if ('caches' in window) {
+        caches
+            .keys()
+            .then(cache_names => Promise.all(cache_names.map(cache_name => caches.delete(cache_name))))
+            .catch(error => console.warn('Unable to clear stale PWA caches.', error));
     }
 }

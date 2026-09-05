@@ -1,0 +1,143 @@
+.redirect-to-home-popup {
+    &__content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.6rem;
+        text-align: left;
+
+        @include desktop-screen {
+            padding: 1rem;
+        }
+
+        &--success {
+            align-items: center;
+            text-align: center;
+        }
+    }
+
+    &__close {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+
+        @include desktop-screen {
+            top: 0.4rem;
+            right: 0.4rem;
+        }
+    }
+
+    &__eyebrow {
+        letter-spacing: 0.2rem;
+        text-transform: uppercase;
+    }
+
+    &__title {
+        margin-bottom: 0.4rem;
+    }
+
+    &__highlight {
+        color: var(--brand-red-coral);
+    }
+
+    &__success-icon {
+        margin-bottom: 0.8rem;
+    }
+
+    &__centered-text {
+        width: 100%;
+        text-align: center;
+    }
+
+    &__info {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.2rem;
+        width: 100%;
+        padding: 1.6rem;
+        border-left: 0.4rem solid var(--brand-red-coral);
+        border-radius: 0.4rem;
+        background-color: var(--semantic-color-slate-solid-surface-normal-low, rgba(0, 0, 0, 0.04));
+        text-align: left;
+    }
+
+    &__info-icon {
+        flex-shrink: 0;
+        margin-top: 0.2rem;
+    }
+
+    &__actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        width: 100%;
+        margin-top: 0.8rem;
+    }
+}
+
+.redirect-to-home-banner {
+    position: fixed;
+    right: 1.6rem;
+    bottom: 1.6rem;
+    left: 1.6rem;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    padding: 1.6rem 2rem;
+    border-top: 0.2rem solid var(--brand-red-coral);
+    border-radius: 0.8rem;
+    background-color: var(--general-main-1, #ffffff);
+    box-shadow: 0 0.8rem 2.4rem rgba(0, 0, 0, 0.12);
+
+    @include desktop-screen {
+        right: 2.4rem;
+        bottom: 2.4rem;
+        left: 2.4rem;
+        max-width: 96rem;
+        margin-inline: auto;
+        padding: 2rem 2.4rem;
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.6rem;
+        width: 100%;
+
+        @include desktop-screen {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2.4rem;
+        }
+    }
+
+    &__text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__actions {
+        flex-shrink: 0;
+
+        @include mobile-screen {
+            width: 100%;
+
+            .quill-button {
+                width: 100%;
+            }
+        }
+    }
+}

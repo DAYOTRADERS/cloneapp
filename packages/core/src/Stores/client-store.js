@@ -2998,7 +2998,6 @@ export default class ClientStore extends BaseStore {
     setIsPasskeySupported(is_passkey_supported = false) {
         this.is_passkey_supported = is_passkey_supported;
     }
-]
     setIsPhoneNumberVerificationEnabled(is_phone_number_verification_enabled = false) {
         this.is_phone_number_verification_enabled = is_phone_number_verification_enabled;
     }

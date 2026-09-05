@@ -40,8 +40,31 @@ const has_endpoint_url = checkAndSetEndpointFromUrl();
 // if has endpoint url, APP will be redirected
 if (!has_endpoint_url) {
     const initApp = async () => {
-        const is_tmb_enabled = await isTmbEnabled();
-        const accounts = await getActiveAccounts();
+        // Do not block the entire UI on account discovery. If the account helper
+        // is slow/unavailable, the application can still boot and authenticate later.
+        let is_tmb_enabled = false;
+        let accounts;
+
+        try {
+            is_tmb_enabled = await Promise.race([
+                isTmbEnabled(),
+                new Promise(resolve => setTimeout(() => resolve(false), 2500)),
+            ]);
+        } catch (error) {
+            console.warn('TMB detection failed; continuing with normal startup.', error);
+        }
+
+        if (is_tmb_enabled) {
+            try {
+                accounts = await Promise.race([
+                    getActiveAccounts(),
+                    new Promise(resolve => setTimeout(() => resolve(undefined), 2500)),
+                ]);
+            } catch (error) {
+                console.warn('Active account discovery failed; continuing with normal startup.', error);
+            }
+        }
+
         const root_store = is_tmb_enabled
             ? initStore(AppNotificationMessages, accounts)
             : initStore(AppNotificationMessages);

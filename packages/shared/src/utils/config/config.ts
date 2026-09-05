@@ -22,7 +22,7 @@ export const domain_app_ids = {
     'staging-app.deriv.me': 1411, // TODO: setup staging for deriv.me
     'app.deriv.be': 30767,
     'staging-app.deriv.be': 31186,
-    'binary.com': 1,
+    binary.com: 1,
     'test-app.deriv.com': 51072,
 };
 
@@ -73,9 +73,10 @@ export const getAppId = () => {
 
         // Deriv WebSocket app IDs are numeric. Ignore stale OAuth/client IDs or
         // other malformed values and fall back to the normal domain App ID.
-        if (!/^\d+$/.test(config_app_id)) config_app_id = '';
-
-        if (config_app_id && config_app_id !== raw_config_app_id) {
+        if (!/^\d+$/.test(config_app_id)) {
+            config_app_id = '';
+            window.localStorage.removeItem('config.app_id');
+        } else if (config_app_id !== raw_config_app_id) {
             window.localStorage.setItem('config.app_id', config_app_id);
         }
     }

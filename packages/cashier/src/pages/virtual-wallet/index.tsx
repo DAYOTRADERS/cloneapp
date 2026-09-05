@@ -14,6 +14,9 @@ const VirtualWallet = observer(() => {
     const activeAccount = client.loginid;
     const [amount, setAmount] = useState('');
     const [transferAmount, setTransferAmount] = useState('');
+    const [tradeStake, setTradeStake] = useState('');
+    const [tradeMultiplier, setTradeMultiplier] = useState('2');
+    const [tradeResult, setTradeResult] = useState<'win' | 'loss' | 'push'>('win');
     const [message, setMessage] = useState('');
 
     const isSupported = !!activeAccount && virtual_wallet.isSupportedAccount(activeAccount);
@@ -42,6 +45,35 @@ const VirtualWallet = observer(() => {
         const success = virtual_wallet.transfer(activeAccount, transferTo, value);
         setMessage(success ? `Virtual transfer to ${transferTo} completed.` : 'Invalid amount or insufficient virtual funds.');
         if (success) setTransferAmount('');
+    };
+
+    const handlePaperTrade = () => {
+        if (!activeAccount) return;
+        const stake = Number(tradeStake);
+        const multiplier = Number(tradeMultiplier);
+
+        if (!Number.isFinite(stake) || stake <= 0 || !Number.isFinite(multiplier) || multiplier < 1) {
+            setMessage('Enter a valid stake and multiplier.');
+            return;
+        }
+
+        if (!virtual_wallet.debitForTrade(activeAccount, stake)) {
+            setMessage('Insufficient virtual funds for this paper trade.');
+            return;
+        }
+
+        if (tradeResult === 'win') {
+            const totalReturn = Number((stake * multiplier).toFixed(2));
+            virtual_wallet.creditFromTrade(activeAccount, totalReturn);
+            setMessage(`Paper trade won. Virtual return: ${formatMoney(totalReturn)}.`);
+        } else if (tradeResult === 'push') {
+            virtual_wallet.creditFromTrade(activeAccount, stake);
+            setMessage('Paper trade pushed. Your virtual stake was returned.');
+        } else {
+            setMessage(`Paper trade lost ${formatMoney(stake)}.`);
+        }
+
+        setTradeStake('');
     };
 
     if (!activeAccount) {
@@ -108,13 +140,45 @@ const VirtualWallet = observer(() => {
                     <Button onClick={handleTransfer}>Transfer</Button>
                 </div>
 
+                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--general-section-1)' }}>
+                    <Text weight='bold'>Paper trading</Text>
+                    <Text size='xs' color='less-prominent'>Simulation only. No Deriv proposal, buy, sell, payment or real-account request is made.</Text>
+                    <input
+                        aria-label='Paper trade stake'
+                        inputMode='decimal'
+                        placeholder='Stake'
+                        value={tradeStake}
+                        onChange={event => setTradeStake(event.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: 12, margin: '12px 0', borderRadius: 8, border: '1px solid var(--general-section-1)' }}
+                    />
+                    <input
+                        aria-label='Paper trade payout multiplier'
+                        inputMode='decimal'
+                        placeholder='Payout multiplier (e.g. 2)'
+                        value={tradeMultiplier}
+                        onChange={event => setTradeMultiplier(event.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: 12, marginBottom: 12, borderRadius: 8, border: '1px solid var(--general-section-1)' }}
+                    />
+                    <select
+                        aria-label='Paper trade result'
+                        value={tradeResult}
+                        onChange={event => setTradeResult(event.target.value as 'win' | 'loss' | 'push')}
+                        style={{ width: '100%', boxSizing: 'border-box', padding: 12, marginBottom: 12, borderRadius: 8, border: '1px solid var(--general-section-1)', background: 'transparent' }}
+                    >
+                        <option value='win'>Win</option>
+                        <option value='loss'>Loss</option>
+                        <option value='push'>Push / stake returned</option>
+                    </select>
+                    <Button onClick={handlePaperTrade} primary>Place paper trade</Button>
+                </div>
+
                 {message && <Text size='xs' color='less-prominent'>{message}</Text>}
 
                 <div style={{ marginTop: 28 }}>
                     <Text weight='bold'>Recent virtual transactions</Text>
                     {virtual_wallet.transactions
                         .filter(transaction => transaction.account === activeAccount)
-                        .slice(0, 8)
+                        .slice(0, 12)
                         .map(transaction => (
                             <div key={transaction.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '10px 0' }}>
                                 <Text size='xs'>{transaction.description}</Text>

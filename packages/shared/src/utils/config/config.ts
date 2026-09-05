@@ -22,7 +22,7 @@ export const domain_app_ids = {
     'staging-app.deriv.me': 1411, // TODO: setup staging for deriv.me
     'app.deriv.be': 30767,
     'staging-app.deriv.be': 31186,
-    binary.com: 1,
+    'binary.com': 1,
     'test-app.deriv.com': 51072,
 };
 

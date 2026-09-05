@@ -5,14 +5,12 @@ import { localize } from '@deriv/translations';
 
 import { CashierLockedChecker } from '../components/cashier-locked-checker';
 import { Cashier } from '../containers';
-import { AccountTransfer, Deposit, PaymentAgent, PaymentAgentTransfer, Withdrawal } from '../pages';
+import { AccountTransfer, Deposit, PaymentAgent, PaymentAgentTransfer, VirtualWallet, Withdrawal } from '../pages';
 import { TRoute, TRouteConfig } from '../types';
 
-// Error Routes
 const Page404 = React.lazy(() => moduleLoader(() => import(/* webpackChunkName: "404" */ '../components/page-404')));
 export type TPage404 = typeof Page404;
 
-// Order matters
 const initRoutesConfig = (): TRouteConfig[] => [
     {
         path: routes.cashier,
@@ -22,6 +20,12 @@ const initRoutesConfig = (): TRouteConfig[] => [
         getTitle: () => localize('Cashier'),
         icon_component: 'IcCashier',
         routes: [
+            {
+                path: '/cashier/virtual-wallet',
+                component: VirtualWallet,
+                getTitle: () => localize('Virtual wallet'),
+                icon_component: 'IcCashierAdd',
+            },
             {
                 path: routes.cashier_deposit,
                 component: () => (
@@ -75,8 +79,6 @@ const initRoutesConfig = (): TRouteConfig[] => [
 ];
 
 let routesConfig: undefined | TRouteConfig[];
-
-// For default page route if page/path is not found, must be kept at the end of routes_config array
 const route_default: TRoute = { component: Page404, getTitle: () => localize('Error 404') };
 
 const getRoutesConfig = (): TRouteConfig[] => {

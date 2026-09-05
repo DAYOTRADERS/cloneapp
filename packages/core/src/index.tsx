@@ -54,7 +54,12 @@ if (!has_endpoint_url) {
             console.warn('TMB detection failed; continuing with normal startup.', error);
         }
 
-        if (is_tmb_enabled) {
+        // The TMB active-session endpoint is not CORS-enabled for custom/third-party
+        // origins such as this Vercel deployment. Only use it on Deriv-owned origins.
+        const is_deriv_origin =
+            window.location.hostname === 'deriv.com' || window.location.hostname.endsWith('.deriv.com');
+
+        if (is_tmb_enabled && is_deriv_origin) {
             try {
                 accounts = await Promise.race([
                     getActiveAccounts(),

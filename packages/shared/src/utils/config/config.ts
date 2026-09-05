@@ -93,8 +93,9 @@ export const getSocketURL = (is_wallets = false) => {
     const loginid = local_storage_loginid || active_loginid_from_url;
     const is_real = loginid && !/^(VRT|VRW)/.test(loginid);
 
-    const server = is_real ? 'green' : 'blue';
-    const server_url = `${server}.derivws.com`;
+    // Use Deriv's documented public/legacy WebSocket endpoint instead of the
+    // blue/green hostnames, which are failing to establish a browser socket.
+    const server_url = 'ws.binaryws.com';
 
     return server_url;
 };

@@ -3,6 +3,7 @@ import Deposit from './deposit';
 import OnRamp from './on-ramp';
 import PaymentAgent from './payment-agent';
 import PaymentAgentTransfer from './payment-agent-transfer';
+import VirtualWallet from './virtual-wallet';
 import Withdrawal from './withdrawal';
 
-export { AccountTransfer, Deposit, OnRamp, PaymentAgent, PaymentAgentTransfer, Withdrawal };
+export { AccountTransfer, Deposit, OnRamp, PaymentAgent, PaymentAgentTransfer, VirtualWallet, Withdrawal };

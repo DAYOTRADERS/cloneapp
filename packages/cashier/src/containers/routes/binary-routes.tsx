@@ -15,6 +15,16 @@ type TBinaryRoutesProps = {
     is_logging_in: boolean;
 };
 
+const is_deriv_origin =
+    window.location.hostname === 'deriv.com' ||
+    window.location.hostname.endsWith('.deriv.com') ||
+    window.location.hostname === 'deriv.app' ||
+    window.location.hostname.endsWith('.deriv.app') ||
+    window.location.hostname === 'deriv.me' ||
+    window.location.hostname.endsWith('.deriv.me') ||
+    window.location.hostname === 'deriv.be' ||
+    window.location.hostname.endsWith('.deriv.be');
+
 const BinaryRoutes = (props: TBinaryRoutesProps) => {
     const { client } = useStore();
     const { isHubRedirectionEnabled, isHubRedirectionLoaded } = useIsHubRedirectionEnabled();
@@ -30,6 +40,7 @@ const BinaryRoutes = (props: TBinaryRoutesProps) => {
 
     const PRODUCTION_REDIRECT_URL = `https://hub.${getDomainUrl()}/tradershub`;
     const STAGING_REDIRECT_URL = `https://staging-hub.${getDomainUrl()}/tradershub`;
+    const should_use_hub_redirection = is_deriv_origin && isHubRedirectionEnabled;
 
     useEffect(() => {
         if (has_wallet === undefined) {
@@ -38,7 +49,7 @@ const BinaryRoutes = (props: TBinaryRoutesProps) => {
         }
 
         if (
-            isHubRedirectionEnabled &&
+            should_use_hub_redirection &&
             has_wallet &&
             !is_logging_out &&
             is_logged_in &&
@@ -55,14 +66,14 @@ const BinaryRoutes = (props: TBinaryRoutesProps) => {
             window.location.href = redirect_path;
         }
 
-        const shouldStayInDerivApp = !isHubRedirectionEnabled || !has_wallet || prevent_redirect_to_hub;
+        const shouldStayInDerivApp = !should_use_hub_redirection || !has_wallet || prevent_redirect_to_hub;
         if (prevent_single_login && isHubRedirectionLoaded && is_client_store_initialized && shouldStayInDerivApp) {
             setPreventSingleLogin(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         isHubRedirectionLoaded,
-        isHubRedirectionEnabled,
+        should_use_hub_redirection,
         has_wallet,
         is_logging_out,
         is_logged_in,
@@ -70,7 +81,7 @@ const BinaryRoutes = (props: TBinaryRoutesProps) => {
         prevent_single_login,
         is_client_store_initialized,
     ]);
-    if (has_wallet && isHubRedirectionLoaded && isHubRedirectionEnabled) {
+    if (should_use_hub_redirection && has_wallet && isHubRedirectionLoaded) {
         return <Loading is_fullscreen />;
     }
 

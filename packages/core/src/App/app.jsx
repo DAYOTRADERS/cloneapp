@@ -6,14 +6,12 @@ import PropTypes from 'prop-types';
 import { APIProvider } from '@deriv/api';
 import { CashierStore } from '@deriv/cashier';
 import { CFDStore } from '@deriv/cfd';
-import { Loading } from '@deriv/components';
 import {
     initFormErrorMessages,
     POIProvider,
     setSharedCFDText,
     setUrlLanguage,
     setWebsocket,
-    useOnLoadTranslation,
 } from '@deriv/shared';
 import { P2PSettingsProvider, StoreProvider } from '@deriv/stores';
 import { getLanguage, initializeTranslations } from '@deriv/translations';
@@ -37,15 +35,7 @@ const AppWithoutTranslation = ({ root_store }) => {
     const l = window.location;
     const base = l.pathname.split('/')[1];
     const has_base = /^\/(br_)/.test(l.pathname);
-    const [is_translation_loaded] = useOnLoadTranslation();
-    const initCashierStore = () => {
-        root_store.modules.attachModule('cashier', new CashierStore(root_store, WS));
-        root_store.modules.cashier.general_store.init();
-    };
     const { i18n } = useTranslation();
-    const initCFDStore = () => {
-        root_store.modules.attachModule('cfd', new CFDStore({ root_store, WS }));
-    };
     const { preferred_language } = root_store.client;
     const { is_dark_mode_on } = root_store.ui;
     const is_dark_mode = is_dark_mode_on || JSON.parse(localStorage.getItem('ui_store'))?.is_dark_mode_on;
@@ -95,15 +85,20 @@ const AppWithoutTranslation = ({ root_store }) => {
 
     React.useEffect(() => {
         sessionStorage.removeItem('redirect_url');
-        initCashierStore();
-        initCFDStore();
+        root_store.modules.attachModule('cashier', new CashierStore(root_store, WS));
+        root_store.modules.cashier.general_store.init();
+        root_store.modules.attachModule('cfd', new CFDStore({ root_store, WS }));
+
         const loadSmartchartsStyles = () => {
             import('@deriv/deriv-charts/dist/smartcharts.css');
         };
 
-        initializeTranslations();
+        // Translation initialization is deliberately non-blocking. The app shell
+        // must remain usable even if a translation CDN request is slow/unavailable.
+        initializeTranslations().catch(error => {
+            console.warn('Translation initialization failed; continuing with fallback language.', error);
+        });
 
-        // TODO: [translation-to-shared]: add translation implemnentation in shared
         setUrlLanguage(getLanguage());
         initFormErrorMessages(FORM_ERROR_MESSAGES);
         setSharedCFDText(CFD_TEXT);
@@ -143,30 +138,24 @@ const AppWithoutTranslation = ({ root_store }) => {
     }, []);
 
     return (
-        <>
-            {is_translation_loaded ? (
-                <Router basename={has_base ? `/${base}` : null}>
-                    <StoreProvider store={root_store}>
-                        <BreakpointProvider>
-                            <APIProvider>
-                                <POIProvider>
-                                    <P2PSettingsProvider>
-                                        <TranslationProvider defaultLang={language} i18nInstance={i18nInstance}>
-                                            {/* This is required as translation provider uses suspense to reload language */}
-                                            <React.Suspense fallback={<Loading />}>
-                                                <AppContent passthrough={platform_passthrough} />
-                                            </React.Suspense>
-                                        </TranslationProvider>
-                                    </P2PSettingsProvider>
-                                </POIProvider>
-                            </APIProvider>
-                        </BreakpointProvider>
-                    </StoreProvider>
-                </Router>
-            ) : (
-                <></>
-            )}
-        </>
+        <Router basename={has_base ? `/${base}` : null}>
+            <StoreProvider store={root_store}>
+                <BreakpointProvider>
+                    <APIProvider>
+                        <POIProvider>
+                            <P2PSettingsProvider>
+                                <TranslationProvider defaultLang={language} i18nInstance={i18nInstance}>
+                                    {/* Translation loading must not prevent the main application shell from rendering. */}
+                                    <React.Suspense fallback={<div style={{ minHeight: '100vh' }} />}>
+                                        <AppContent passthrough={platform_passthrough} />
+                                    </React.Suspense>
+                                </TranslationProvider>
+                            </P2PSettingsProvider>
+                        </POIProvider>
+                    </APIProvider>
+                </BreakpointProvider>
+            </StoreProvider>
+        </Router>
     );
 };
 

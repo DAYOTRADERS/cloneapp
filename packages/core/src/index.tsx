@@ -12,6 +12,20 @@ import AppNotificationMessages from './App/Containers/app-notification-messages.
 import { AnalyticsInitializer } from 'Utils/Analytics';
 import { getActiveAccounts, isTmbEnabled } from '@deriv/utils';
 
+const DERIV_OAUTH_APP_ID = '34jChK9KLIlj89GWZImQ5';
+
+const configureDerivAppId = () => {
+    try {
+        // @deriv-com/auth-client reads the configured App ID from local storage.
+        // Store it as a JSON string because LocalStorageUtils parses stored values.
+        window.localStorage.setItem('config.app_id', JSON.stringify(DERIV_OAUTH_APP_ID));
+    } catch (error) {
+        // Do not prevent the application from starting if browser storage is unavailable.
+        console.warn('Unable to configure the Deriv App ID in local storage.', error);
+    }
+};
+
+configureDerivAppId();
 AnalyticsInitializer();
 if (
     !!window?.localStorage.getItem?.('debug_service_worker') || // To enable local service worker related development

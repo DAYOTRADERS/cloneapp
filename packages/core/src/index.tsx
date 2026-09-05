@@ -16,9 +16,9 @@ const DERIV_OAUTH_APP_ID = '34jChK9KLIlj89GWZImQ5';
 
 const configureDerivAppId = () => {
     try {
-        // @deriv-com/auth-client reads the configured App ID from local storage.
-        // Store it as a JSON string because LocalStorageUtils parses stored values.
-        window.localStorage.setItem('config.app_id', JSON.stringify(DERIV_OAUTH_APP_ID));
+        // Store the App ID as a plain string. The WebSocket URL must receive
+        // app_id=34jChK9KLIlj89GWZImQ5, not a JSON-quoted value.
+        window.localStorage.setItem('config.app_id', DERIV_OAUTH_APP_ID);
     } catch (error) {
         // Do not prevent the application from starting if browser storage is unavailable.
         console.warn('Unable to configure the Deriv App ID in local storage.', error);

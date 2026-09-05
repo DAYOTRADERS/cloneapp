@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { observer } from 'mobx-react-lite';
 import { Button, Text } from '@deriv/components';
-import { useStore } from '@deriv/stores';
+import { observer, useStore } from '@deriv/stores';
 import PageContainer from '../../components/page-container';
 import { useCashierStore } from '../../stores/useCashierStores';
 
@@ -22,7 +21,11 @@ const VirtualWallet = observer(() => {
 
     const handleWithdrawal = () => {
         const value = Number(amount);
-        setMessage(virtual_wallet.withdraw(activeAccount, value) ? 'Virtual withdrawal completed.' : 'Invalid amount or insufficient virtual funds.');
+        setMessage(
+            virtual_wallet.withdraw(activeAccount, value)
+                ? 'Virtual withdrawal completed.'
+                : 'Invalid amount or insufficient virtual funds.'
+        );
         if (Number.isFinite(value) && value > 0 && value <= balance) setAmount('');
     };
 
@@ -32,7 +35,9 @@ const VirtualWallet = observer(() => {
                 <Text as='h2'>Virtual Wallet</Text>
                 <div style={{ padding: 24, margin: '20px 0', borderRadius: 12, background: 'var(--general-section-1)' }}>
                     <Text size='xs' color='less-prominent'>Virtual balance</Text>
-                    <Text as='h1' weight='bold'>${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+                    <Text as='h1' weight='bold'>
+                        ${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Text>
                     <Text size='xs' color='less-prominent'>Account: {activeAccount}</Text>
                 </div>
                 <input
@@ -41,7 +46,14 @@ const VirtualWallet = observer(() => {
                     placeholder='Amount'
                     value={amount}
                     onChange={event => setAmount(event.target.value)}
-                    style={{ width: '100%', boxSizing: 'border-box', padding: 12, marginBottom: 12, borderRadius: 8, border: '1px solid var(--general-section-1)' }}
+                    style={{
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        padding: 12,
+                        marginBottom: 12,
+                        borderRadius: 8,
+                        border: '1px solid var(--general-section-1)',
+                    }}
                 />
                 <div style={{ display: 'flex', gap: 12 }}>
                     <Button onClick={handleDeposit} primary>Deposit</Button>
@@ -50,12 +62,17 @@ const VirtualWallet = observer(() => {
                 {message && <Text size='xs' color='less-prominent'>{message}</Text>}
                 <div style={{ marginTop: 28 }}>
                     <Text weight='bold'>Recent virtual transactions</Text>
-                    {virtual_wallet.transactions.filter(transaction => transaction.account === activeAccount).slice(0, 8).map(transaction => (
-                        <div key={transaction.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
-                            <Text size='xs'>{transaction.description}</Text>
-                            <Text size='xs'>{transaction.amount >= 0 ? '+' : ''}${transaction.amount.toFixed(2)}</Text>
-                        </div>
-                    ))}
+                    {virtual_wallet.transactions
+                        .filter(transaction => transaction.account === activeAccount)
+                        .slice(0, 8)
+                        .map(transaction => (
+                            <div key={transaction.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                                <Text size='xs'>{transaction.description}</Text>
+                                <Text size='xs'>
+                                    {transaction.amount >= 0 ? '+' : ''}${transaction.amount.toFixed(2)}
+                                </Text>
+                            </div>
+                        ))}
                 </div>
             </div>
         </PageContainer>

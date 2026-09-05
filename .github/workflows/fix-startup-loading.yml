@@ -1,0 +1,51 @@
+name: Fix startup loading
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply precise fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          client = Path('packages/core/src/Stores/client-store.js')
+          s = client.read_text()
+          old = "    }\n]\n    setIsPhoneNumberVerificationEnabled"
+          new = "    }\n    setIsPhoneNumberVerificationEnabled"
+          if old not in s:
+              raise SystemExit('client-store syntax pattern not found')
+          client.write_text(s.replace(old, new, 1))
+
+          index = Path('packages/core/src/index.tsx')
+          s = index.read_text()
+          old = '''    const initApp = async () => {\n        const is_tmb_enabled = await isTmbEnabled();\n        const accounts = await getActiveAccounts();\n        const root_store = is_tmb_enabled\n            ? initStore(AppNotificationMessages, accounts)\n            : initStore(AppNotificationMessages);\n\n        const wrapper = document.getElementById('deriv_app');\n        if (wrapper) {\n            ReactDOM.render(<App useSuspense={false} root_store={root_store} />, wrapper);\n        }\n    };\n\n    initApp();'''
+          new = '''    const initApp = async () => {\n        // Do not block the entire UI on account discovery. If the account helper\n        // is slow/unavailable, the application can still boot and authenticate later.\n        let is_tmb_enabled = false;\n        let accounts;\n\n        try {\n            is_tmb_enabled = await Promise.race([\n                isTmbEnabled(),\n                new Promise(resolve => setTimeout(() => resolve(false), 2500)),\n            ]);\n        } catch (error) {\n            console.warn('TMB detection failed; continuing with normal startup.', error);\n        }\n\n        if (is_tmb_enabled) {\n            try {\n                accounts = await Promise.race([\n                    getActiveAccounts(),\n                    new Promise(resolve => setTimeout(() => resolve(undefined), 2500)),\n                ]);\n            } catch (error) {\n                console.warn('Active account discovery failed; continuing with normal startup.', error);\n            }\n        }\n\n        const root_store = is_tmb_enabled\n            ? initStore(AppNotificationMessages, accounts)\n            : initStore(AppNotificationMessages);\n\n        const wrapper = document.getElementById('deriv_app');\n        if (wrapper) {\n            ReactDOM.render(<App useSuspense={false} root_store={root_store} />, wrapper);\n        }\n    };\n\n    initApp();'''
+          if old not in s:
+              raise SystemExit('index startup block not found')
+          index.write_text(s.replace(old, new, 1))
+          PY
+
+      - name: Remove temporary workflow
+        run: git rm .github/workflows/fix-startup-loading.yml
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/core/src/Stores/client-store.js packages/core/src/index.tsx
+          git commit -m "fix: unblock app startup and client store syntax"
+          git push

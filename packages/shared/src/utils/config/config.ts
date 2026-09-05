@@ -51,11 +51,35 @@ export const isLocal = () => /localhost(:\d+)?$/i.test(window.location.hostname)
 export const getAppId = () => {
     let app_id = null;
     const user_app_id = ''; // you can insert Application ID of your registered application here
-    const config_app_id = window.localStorage.getItem('config.app_id');
+    const raw_config_app_id = window.localStorage.getItem('config.app_id');
     const current_domain = getCurrentProductionDomain() || '';
     window.localStorage.removeItem('config.platform'); // Remove config stored in localstorage if there's any.
     const platform = window.sessionStorage.getItem('config.platform');
     const is_bot = isBot();
+
+    // Older/custom builds sometimes stored the App ID using JSON.stringify(),
+    // which produced values such as \"12345\". Normalize that value before it
+    // reaches the WebSocket URL so %22 can never be sent as part of app_id.
+    let config_app_id = raw_config_app_id;
+    if (config_app_id) {
+        try {
+            const parsed_app_id = JSON.parse(config_app_id);
+            if (typeof parsed_app_id === 'string') config_app_id = parsed_app_id;
+        } catch {
+            // The stored value is already a plain string.
+        }
+
+        config_app_id = String(config_app_id).trim().replace(/^['\"]|['\"]$/g, '');
+
+        // Deriv WebSocket app IDs are numeric. Ignore stale OAuth/client IDs or
+        // other malformed values and fall back to the normal domain App ID.
+        if (!/^\d+$/.test(config_app_id)) config_app_id = '';
+
+        if (config_app_id && config_app_id !== raw_config_app_id) {
+            window.localStorage.setItem('config.app_id', config_app_id);
+        }
+    }
+
     // Added platform at the top since this should take precedence over the config_app_id
     if (platform && platform_app_ids[platform as keyof typeof platform_app_ids]) {
         app_id = platform_app_ids[platform as keyof typeof platform_app_ids];

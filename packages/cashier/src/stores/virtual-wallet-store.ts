@@ -63,7 +63,7 @@ export default class VirtualWalletStore {
             if (saved?.initialized) this.initialized = saved.initialized;
             if (Array.isArray(saved?.transactions)) this.transactions = saved.transactions;
         } catch {
-            // Ignore malformed local virtual-wallet data and start cleanly.
+            Object.assign(this, emptyState());
         }
 
         // Only the requested virtual real-account login id receives the first-use $5,900 grant.
@@ -105,11 +105,16 @@ export default class VirtualWalletStore {
         return Number(this.balances[account] || 0);
     }
 
+    // This method is intended for a trusted server/admin layer. The browser store itself
+    // is not a security boundary because its state lives in localStorage.
     setBalance(account: string, amount: number, description = 'Admin virtual balance adjustment') {
         if (!this.isSupportedAccount(account) || !Number.isFinite(amount) || amount < 0) return false;
-        this.balances[account] = Number(amount.toFixed(2));
+        const nextBalance = Number(amount.toFixed(2));
+        const previousBalance = this.getBalance(account);
+        const delta = Number((nextBalance - previousBalance).toFixed(2));
+        this.balances[account] = nextBalance;
         this.initialized[account] = true;
-        this.addTransaction(account, 'deposit', this.balances[account], description);
+        this.addTransaction(account, 'deposit', delta, description);
         this.persist();
         return true;
     }
@@ -141,6 +146,8 @@ export default class VirtualWalletStore {
         return true;
     }
 
+    // These methods are deliberately separate from Deriv's real trading API.
+    // A paper-trading simulator can call them without changing any real/demo Deriv balance.
     debitForTrade(account: string, amount: number) {
         if (!this.isSupportedAccount(account) || !Number.isFinite(amount) || amount <= 0 || amount > this.getBalance(account)) return false;
         this.balances[account] = Number((this.getBalance(account) - amount).toFixed(2));

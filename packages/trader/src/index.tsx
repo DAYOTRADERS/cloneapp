@@ -3,7 +3,6 @@ import { getPositionsV2TabIndexFromURL, makeLazyLoader, moduleLoader, routes } f
 import { Loading } from '@deriv/components';
 import { TCoreStores } from '@deriv/stores/types';
 import { TWebSocket } from 'Types';
-import { useDtraderV2Flag } from '@deriv/hooks';
 
 type Apptypes = {
     passthrough: {
@@ -12,11 +11,9 @@ type Apptypes = {
     };
 };
 
-const AppLoader = makeLazyLoader(
-    () => moduleLoader(() => import(/* webpackChunkName: "trader-app", webpackPreload: true */ './App/index')),
-    () => <Loading />
-)() as React.ComponentType<Apptypes>;
-
+// DTrader V2 is the default trading interface for this build.
+// Keep the legacy loader out of the selection path so the old Deriv
+// trader UI is not shown when the trading page opens.
 const AppV2Loader = makeLazyLoader(
     () => moduleLoader(() => import(/* webpackChunkName: "trader-app-v2", webpackPreload: true */ './AppV2/index')),
     () => (
@@ -29,15 +26,6 @@ const AppV2Loader = makeLazyLoader(
     )
 )() as React.ComponentType<Apptypes>;
 
-const App = ({ passthrough }: Apptypes) => {
-    const { dtrader_v2_enabled_desktop, dtrader_v2_enabled_mobile, load_dtrader_module } = useDtraderV2Flag();
-    if (load_dtrader_module) {
-        return dtrader_v2_enabled_desktop || dtrader_v2_enabled_mobile ? (
-            <AppV2Loader passthrough={passthrough} />
-        ) : (
-            <AppLoader passthrough={passthrough} />
-        );
-    }
-    return <Loading />;
-};
+const App = ({ passthrough }: Apptypes) => <AppV2Loader passthrough={passthrough} />;
+
 export default App;
